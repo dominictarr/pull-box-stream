@@ -16,23 +16,29 @@ packet sequence number and mac are hmaced.
 In `pull-boxes`, first the packet is boxed, then the header
 is constructed from the length + packet mac, then the header is boxed.
 
+Since the stream is a random nonce then every
+ header and packet body are encrypted, then every byte in the stream
+appears random. The only information an evesdropper can extract is
+packet timing and to guess at packet boundries
+(although, sometimes packets will be appended)
+
 ```
-[nonce (24)] //send random nonce
+[nonce (24)] // send random nonce
 
 (
 
   [header MAC (16)] // sends header MAC
      |
      |   .--header-box-----------------.
-     \-> |length (2), [packet MAC (16)]| //sends encrypted header
+     \-> |length (2), [packet MAC (16)]| // sends encrypted header
          `--^------------|-------------`
             |            |
             |            |  .-packet-box-------.
-            |            `->|data.. (length...)| //sends encrypted packet
+            |            `->|data.. (length...)| // sends encrypted packet
             |               `-----------|------`
             \---------------------------/
 
-) * //repeat 0-N times
+) * // repeat 0-N times
 ```
 
 Since the packet mac is inside the header box, the packet
@@ -47,9 +53,7 @@ then zero or more {header, packet} pairs. Each header is 34 bytes
 long (header mac + length + packet mac). Then the packet is length long
 (with a maximum length of 4096 bytes long)
 
-packet P uses N+2P to box the header, and N+2P+1 to box the packet.
-
-
+Packet P uses N+2P to box the header, and N+2P+1 to box the packet.
 
 ## License
 

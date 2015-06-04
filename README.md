@@ -39,6 +39,12 @@ packet timing and to guess at packet boundries
             \---------------------------/
 
 ) * // repeat 0-N times
+
+[final header MAC(16)]
+   |
+   |  .-final-header-box-------.
+   \->|length=0 (2), zeros (18)|
+      `------------------------`
 ```
 
 Since the packet mac is inside the header box, the packet
@@ -53,7 +59,11 @@ then zero or more {header, packet} pairs. Each header is 34 bytes
 long (header mac + length + packet mac). Then the packet is length long
 (with a maximum length of 4096 bytes long)
 
-Packet P uses N+2P to box the header, and N+2P+1 to box the packet.
+Packet number P uses N+2P as the nonce on the header box,
+and N+2P+1 as the nonce on the packet box.
+
+A final packet is sent so that an incorrectly terminated session
+can be detected.
 
 ## License
 

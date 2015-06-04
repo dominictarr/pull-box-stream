@@ -66,19 +66,25 @@ tape('encrypt a stream', function (t) {
   )
 })
 
+function randomBuffers(len, n) {
+  var a = []
+  while(n--)
+    a.push(randomBytes(len))
+  return a
+}
 
 tape('encrypt/decrypt', function (t) {
 
-  var input = randomBytes(1024*1024*100)
+  var input = randomBuffers(1024*512, 2*10)
   var start = Date.now()
   console.log('e/d')
   var key = testKey('encrypt/decrypt a stream')
 
   pull(
-    pull.values([input]),
-//    split(),
+    pull.values(input),
+    split(),
     boxes.createEncryptStream(key),
-//    split(),
+    split(),
     boxes.createDecryptStream(key),
 
     pull.collect(function (err, output) {
@@ -87,7 +93,9 @@ tape('encrypt/decrypt', function (t) {
 
       if(err) throw err
 
+      
       output = concat(output)
+      input = concat(input)
       t.equal(output.length, input.length)
       t.deepEqual(output, input)
       t.end()
@@ -109,3 +117,141 @@ tape('error if input is not a buffer', function (t) {
   )
 
 })
+
+tape('detect flipped bits', function (t) {
+
+  var input = randomBuffers(1024, 100)
+  var key = testKey('bit flipper')
+
+  pull(
+    pull.values(input),
+    boxes.createEncryptStream(key),
+    pull.map(function (data) {
+
+      if(Math.random() < 0.1) {
+        var rbit = 1<<(8*Math.random())
+        var i = ~~(Math.random()*data.length)
+        data[i] = data[i]^rbit
+      }
+
+      return data
+
+    }),
+    boxes.createDecryptStream(key),
+    pull.collect(function (err, output) {
+      t.ok(err)
+      t.notEqual(output.length, input.length)
+      t.end()
+    })
+  )
+
+})
+
+function rand (i) {
+  return ~~(Math.random()*i)
+}
+
+tape('protect against reordering', function (t) {
+
+  var input = randomBuffers(1024, 100)
+  var key = testKey('reordering')
+
+  pull(
+    pull.values(input),
+    boxes.createEncryptStream(key),
+    pull.collect(function (err, valid) {
+      //randomly switch two blocks
+      var invalid = valid.slice()
+      //since every even packet is a header,
+      //moving those will produce valid messages
+      //but the counters will be wrong.
+      var i = rand(valid.length/2)*2
+      var j = rand(valid.length/2)*2
+      invalid[i] = valid[j]
+      invalid[i+1] = valid[j+1]
+      invalid[j] = valid[i]
+      invalid[j+1] = valid[i+1]
+      pull(
+        pull.values(invalid),
+        boxes.createDecryptStream(key),
+        pull.collect(function (err, output) {
+          t.notEqual(output.length, input.length)
+          t.ok(err)
+          console.log(err)
+          t.end()
+        })
+      )
+    })
+  )
+})
+
+tape('detect unexpected hangup', function (t) {
+
+    var input = [
+    new Buffer('I <3 TLS\n'),
+    new Buffer('...\n'),
+    new Buffer("NOT!!!")
+  ]
+
+  var key = testKey('detect unexpected hangup')
+
+  pull(
+    pull.values(input),
+    boxes.createBoxStream(key),
+    pull.take(5), //header packet header packet.
+    boxes.createUnboxStream(key),
+    pull.collect(function (err, data) {
+      console.log(err)
+      t.ok(err) //expects an error
+      t.equal(data.join(''), 'I <3 TLS\n...\n')
+      t.end()
+    })
+  )
+
+})
+
+
+tape('detect unexpected hangup, interrupt just the last packet', function (t) {
+
+    var input = [
+    new Buffer('I <3 TLS\n'),
+    new Buffer('...\n'),
+    new Buffer("NOT!!!")
+  ]
+
+  var key = testKey('drop hangup packet')
+
+  pull(
+    pull.values(input),
+    boxes.createBoxStream(key),
+    pull.take(7), //header packet header packet.
+    boxes.createUnboxStream(key),
+    pull.collect(function (err, data) {
+      console.log(err)
+      t.ok(err) //expects an error
+      t.equal(data.join(''), 'I <3 TLS\n...\nNOT!!!')
+      t.end()
+    })
+  )
+
+})
+
+
+tape('immediately hangup', function (t) {
+
+  var key = testKey('empty session')
+
+  pull(
+    pull.values([]),
+    boxes.createBoxStream(key),
+    boxes.createUnboxStream(key),
+    pull.collect(function (err, data) {
+      t.notOk(err)
+      t.deepEqual(data, [])
+      t.end()
+    })
+  )
+
+})
+
+

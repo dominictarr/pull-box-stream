@@ -1,0 +1,28 @@
+{
+  "name": "pull-chacha20poly1305-stream",
+  "description": "",
+  "version": "0.0.0",
+  "homepage": "https://github.com/dominictarr/pull-chacha20poly1305-stream",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dominictarr/pull-chacha20poly1305-stream.git"
+  },
+  "dependencies": {
+    "sodium": "^1.0.17",
+    "pull-stream": "~2.26.1",
+    "split-buffer": "~1.0.0",
+    "pull-reader": "~1.0.1",
+    "increment-buffer": "~1.0.0",
+    "pull-through": "~1.0.14"
+  },
+  "devDependencies": {
+    "tape": "~4.0.0",
+    "pull-randomly-split": "~1.0.4"
+  },
+  "scripts": {
+    "prepublish": "npm ls &&  npm test",
+    "test": "set -e; for t in test/*.js; do node $t; done"
+  },
+  "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://dominictarr.com)",
+  "license": "MIT"
+}

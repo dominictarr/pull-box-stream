@@ -6,19 +6,34 @@ var through = require('pull-through')
 var split = require('split-buffer')
 
 var isBuffer = Buffer.isBuffer
+var concat = Buffer.concat
 
 var zeros = new Buffer(16); zeros.fill(0)
 
-var unbox = sodium.crypto_secretbox_open
-var box   = sodium.crypto_secretbox
+function box (buffer, nonce, key) {
+  var b = sodium.crypto_secretbox(buffer, nonce, key)
+  return b.slice(16, b.length)
+}
+
+function unbox (boxed, nonce, key) {
+  return sodium.crypto_secretbox_open(concat([zeros, boxed]), nonce, key)
+}
+
+function unbox_detached (mac, boxed, nonce, key) {
+  return sodium.crypto_secretbox_open(concat([zeros, mac, boxed]), nonce, key)
+}
 
 var max = 1024*4
 
 var NONCE_LEN = 24
 var HEADER_LEN = 2+16+16
 
-var concat = Buffer.concat
-
+function isZeros(b) {
+  for(var i = 0; i < b.length; i++)
+    if(b[i] !== 0) return false
+  return true
+}
+exports.createBoxStream =
 exports.createEncryptStream = function (key) {
 
 var zeros = new Buffer(16); zeros.fill(0)
@@ -47,26 +62,39 @@ var zeros = new Buffer(16); zeros.fill(0)
       head.writeUInt16BE(input[i].length, 0)
       var boxed = box(input[i], increment(nonce2), key)
       //write the mac into the header.
-      boxed.copy(head, 2, 16, 32)
+      boxed.copy(head, 2, 0, 16)
 
-      this.queue(box(head, nonce1, key).slice(16, 18+16+16))
-      this.queue(boxed.slice(32, 32 + input[i].length))
+      this.queue(box(head, nonce1, key))
+      this.queue(boxed.slice(16, 16 + input[i].length))
 
       increment(increment(nonce1)); increment(nonce2)
     }
+  }, function (err) {
+    if(err) return this.queue(null)
+
+    //handle special-case of empty session
+    if(first) {
+      this.queue(init_nonce)
+      first = false
+    }
+
+    //final header is same length as header except all zeros (inside box)
+    var final = new Buffer(2+16); final.fill(0)
+    this.queue(box(final, nonce1, key))
+    this.queue(null)
   })
 
 }
-
+exports.createUnboxStream =
 exports.createDecryptStream = function (key) {
 
 var zeros = new Buffer(16); zeros.fill(0)
-  var reader = Reader(), first = true, nonce
+  var reader = Reader(), first = true, nonce, ended
 
   return function (read) {
     reader(read)
     return function (abort, cb) {
-
+      if(ended) return cb(ended)
       if(!first) rest()
       else {
         first = false
@@ -79,19 +107,30 @@ var zeros = new Buffer(16); zeros.fill(0)
 
       function rest () {
         reader.read(HEADER_LEN, function (err, cipherheader) {
+          if(err === true) return cb(new Error('unexpected hangup'))
           if(err) return cb(err)
 
-          var header = unbox(concat([zeros, cipherheader]), nonce, key)
+          var header = unbox(cipherheader, nonce, key)
+
+          if(!header)
+            return cb(new Error('invalid header'))
+
+          if(isZeros(header))
+            return cb(ended = true)
+
           var length = header.readUInt16BE(0)
           var mac = header.slice(2, 34)
 
-          reader.read(length, function (err, packet) {
+          reader.read(length, function (err, cipherpacket) {
             if(err) return cb(err)
             //recreate a valid packet
-            var _packet = concat([zeros, mac, packet])
-            var data = unbox(_packet, increment(nonce), key)
+            //TODO: PR to sodium bindings for detached box/open
+            var plainpacket = unbox_detached(mac, cipherpacket, increment(nonce), key)
+            if(!plainpacket)
+              return cb(new Error('invalid packet'))
+
             increment(nonce)
-            cb(null, data)
+            cb(null, plainpacket)
           })
         })
       }

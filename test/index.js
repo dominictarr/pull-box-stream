@@ -18,7 +18,7 @@ var zeros = new Buffer(16); zeros.fill(0)
 // testing is easier when 
 
 function testKey (str) {
-  return sodium.crypto_hash(new Buffer(str)).slice(0, 32)
+  return sodium.crypto_hash(new Buffer(str)).slice(0, 56)
 }
 
 tape('encrypt a stream', function (t) {
@@ -33,11 +33,16 @@ tape('encrypt a stream', function (t) {
       //cipher text
 
       //decrypt the head.
-      var nonce = ary[0]
-      var head = ary[1]
-      var chunk = ary[2]
+      var head = ary[0]
+      var chunk = ary[1]
 
-      var plainhead = unbox(concat([zeros, head]), nonce, key)
+      var _key = key.slice(0, 32)
+      var _nonce = key.slice(32, 56)
+
+      console.log(ary)
+      console.log(ary.map(function (e) { return e.length }))
+
+      var plainhead = unbox(concat([zeros, head]), _nonce, _key)
       var length = plainhead.readUInt16BE(0)
 
       t.equal(length, 11)
@@ -45,10 +50,10 @@ tape('encrypt a stream', function (t) {
 
       var mac = plainhead.slice(2, 18)
       var nonce2 = new Buffer(24)
-      nonce.copy(nonce2, 0, 0, 24)
+      _nonce.copy(nonce2, 0, 0, 24)
 
       var plainchunk =
-        unbox(concat([zeros, mac, chunk]), increment(nonce2), key)
+        unbox(concat([zeros, mac, chunk]), increment(nonce2), _key)
 
       t.deepEqual(plainchunk, new Buffer('hello there'))
 
@@ -198,7 +203,7 @@ tape('detect unexpected hangup', function (t) {
   pull(
     pull.values(input),
     boxes.createBoxStream(key),
-    pull.take(5), //header packet header packet.
+    pull.take(4), //header packet header packet.
     boxes.createUnboxStream(key),
     pull.collect(function (err, data) {
       console.log(err)
@@ -224,7 +229,7 @@ tape('detect unexpected hangup, interrupt just the last packet', function (t) {
   pull(
     pull.values(input),
     boxes.createBoxStream(key),
-    pull.take(7), //header packet header packet.
+    pull.take(6), //header packet header packet.
     boxes.createUnboxStream(key),
     pull.collect(function (err, data) {
       console.log(err)

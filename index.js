@@ -102,7 +102,7 @@ exports.createDecryptStream = function (key, nonce) {
     nonce = key.slice(32, 56)
     key = key.slice(0, 32)
   }
-  else if(!(key.length === 32 && init_nonce.length === 24))
+  else if(!(key.length === 32 && nonce.length === 24))
     throw new Error('nonce must be 24 bytes')
 
   var reader = Reader(), first = true,  ended

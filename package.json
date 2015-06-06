@@ -1,11 +1,11 @@
 {
-  "name": "pull-chacha20poly1305-stream",
-  "description": "",
+  "name": "pull-box-stream",
+  "description": "every-byte-is-encrypted and authenticated pull-stream",
   "version": "0.0.0",
-  "homepage": "https://github.com/dominictarr/pull-chacha20poly1305-stream",
+  "homepage": "https://github.com/dominictarr/pull-box-stream",
   "repository": {
     "type": "git",
-    "url": "git://github.com/dominictarr/pull-chacha20poly1305-stream.git"
+    "url": "git://github.com/dominictarr/pull-box-stream.git"
   },
   "dependencies": {
     "sodium": "^1.0.17",

@@ -2,12 +2,54 @@
 
 stream _one way_ encryption based on [libsodium](https://github.com/paixaop/node-sodium)'s secretbox primitive.
 
-This protocol could be used to encypt a file, but not to encrypt a
-tcp connection unless it was combined with a handshake protocol
+This protocol should not be used to encrypt a tcp connection
+unless it was combined with a handshake protocol
 that was used to derive a forward secure shared key.
 
-This protocol is unusually robust, there are no malleable bytes.
-Even the framing is authenticated, and an attacker cannot
+It may be used to encrypt a file.
+
+## Claims
+
+### All bytes are authenticated & encrypted.
+
+
+*  The reciever never reads an unauthenticated number of bytes.
+
+This protects against attackers causing deadlocks on certain application protocols protected with box-stream.
+(description of this attack on
+[old version of hmac-stream](https://github.com/calvinmetcalf/hmac-stream/issues/5))
+
+* The end of the stream is authenticated.
+
+This detects if an attacker cut off the end of the stream.
+for example:
+
+Alice: hey bob, just calling to say that I think TLS is really great,
+  really elegant protocol, and that I love everything about it.
+
+Mallory (man in the middle): (SNIP! ...terminates connection...)
+
+Alice: NOT!!!!! (Bob never receives this!)
+
+Bob... WTF, I thought Alice had taste!
+
+Bob never gets the punchline, so thinks that Alice's childish humor was
+actually her sincere belief.
+
+With box-stream this would result in an error and Bob would know
+that there was some additional content he missed which hopefully
+explained Alice's absurd statement.
+
+## Disclaims
+
+* This protocol does not obscure packet boundries or packet timing.
+* This protocol is not a substitute for TLS, it must be used with another handshake protocol to derive a shared key.
+
+## Protocol
+
+This protocol has no malleable bytes.
+Even the framing is authenticated, and since the framing is
+authenticated separately to the packet content, an attacker cannot
 flip any bits without being immediately detected.
 
 The design follows on from that used in
@@ -21,7 +63,7 @@ and thus an invalid packet. Flipping a bit in the header will
 invalidate the hmac.
 
 In `pull-boxes` a similar approach is used, but via nacl's authenticated
-encryption primitive: `box`. salsa20 encryption + poly1305 mac.
+encryption primitive: `secretbox`. salsa20 encryption + poly1305 mac.
 The packet is boxed, then the header is constructed from the packet 
 length + packet mac, then the header is boxed.
 

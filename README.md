@@ -1,5 +1,7 @@
 # pull-box-stream
 
+![Travis CI Status](https://travis-ci.org/dominictarr/pull-box-stream)
+
 Streaming encryption based on [libsodium](https://github.com/paixaop/node-sodium)'s box primitive.
 
 This protocol is unusually robust, there are no malleable bytes.

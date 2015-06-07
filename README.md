@@ -2,6 +2,8 @@
 
 stream _one way_ encryption based on [libsodium](https://github.com/paixaop/node-sodium)'s secretbox primitive.
 
+![Travis CI Status](https://travis-ci.org/dominictarr/pull-box-stream)
+
 This protocol should not be used to encrypt a tcp connection
 unless it was combined with a handshake protocol
 that was used to derive a forward secure shared key.

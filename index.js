@@ -34,8 +34,6 @@ function isZeros(b) {
   return true
 }
 
-var zeros = new Buffer(16); zeros.fill(0)
-
 function randomSecret(n) {
   var rand = new Buffer(n)
   sodium.randombytes(rand)

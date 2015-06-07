@@ -1,6 +1,10 @@
 # pull-box-stream
 
-Streaming encryption based on [libsodium](https://github.com/paixaop/node-sodium)'s box primitive.
+stream _one way_ encryption based on [libsodium](https://github.com/paixaop/node-sodium)'s box primitive.
+
+This protocol could be used to encypt a file, but not to encrypt a
+tcp connection unless it was combined with a handshake protocol
+that was used to derive a forward secure shared key.
 
 This protocol is unusually robust, there are no malleable bytes.
 Even the framing is authenticated, and an attacker cannot

@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "sodium": "^1.0.17",
-    "pull-stream": "~2.26.1",
+    "pull-stream": "~2.27.0",
     "split-buffer": "~1.0.0",
-    "pull-reader": "~1.0.1",
+    "pull-reader": "~1.1.0",
     "increment-buffer": "~1.0.0",
-    "pull-through": "~1.0.14"
+    "pull-through": "~1.0.17"
   },
   "devDependencies": {
     "tape": "~4.0.0",

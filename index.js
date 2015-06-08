@@ -37,7 +37,6 @@ function isZeros(b) {
 function randomSecret(n) {
   var rand = new Buffer(n)
   sodium.randombytes(rand)
-  console.log(rand.length, rand)
   return rand
 }
 
@@ -65,9 +64,9 @@ exports.createEncryptStream = function (key, init_nonce) {
 
   return through(function (data) {
 
-    if(!isBuffer(data))
+    if(!isBuffer(data)) {
       return this.emit('error', new Error('input must be a buffer'))
-
+    }
     var input = split(data, max)
 
     for(var i = 0; i < input.length; i++) {
@@ -109,16 +108,24 @@ exports.createDecryptStream = function (key, nonce) {
   return function (read) {
     reader(read)
     return function (abort, cb) {
+
+      //use abort when the input was invalid,
+      //but the source hasn't actually ended yet.
+      function abort(err) {
+        reader.abort(ended = err || true, cb)
+      }
+
       if(ended) return cb(ended)
       reader.read(HEADER_LEN, function (err, cipherheader) {
-        if(err === true) return cb(new Error('unexpected hangup'))
-        if(err) return cb(err)
+        if(err === true) return cb(ended = new Error('unexpected hangup'))
+        if(err) return cb(ended = err)
 
         var header = unbox(cipherheader, nonce, key)
 
         if(!header)
-          return cb(new Error('invalid header'))
+          return abort(new Error('invalid header'))
 
+        //valid end of stream
         if(isZeros(header))
           return cb(ended = true)
 
@@ -126,12 +133,12 @@ exports.createDecryptStream = function (key, nonce) {
         var mac = header.slice(2, 34)
 
         reader.read(length, function (err, cipherpacket) {
-          if(err) return cb(err)
+          if(err) return cb(ended = err)
           //recreate a valid packet
           //TODO: PR to sodium bindings for detached box/open
           var plainpacket = unbox_detached(mac, cipherpacket, increment(nonce), key)
           if(!plainpacket)
-            return cb(new Error('invalid packet'))
+            return abort(new Error('invalid packet'))
 
           increment(nonce)
           cb(null, plainpacket)

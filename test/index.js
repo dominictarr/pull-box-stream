@@ -113,11 +113,11 @@ tape('error if input is not a buffer', function (t) {
   var key = testKey('error if not a buffer')
 
   pull(
-    pull.values([0, 1, 2]),
+    pull.values([0, 1, 2], function (err) { t.end() }),
     boxes.createEncryptStream(key),
     pull.collect(function (err) {
+      console.log('error', err)
       t.ok(err)
-      t.end()
     })
   )
 
@@ -129,7 +129,7 @@ tape('detect flipped bits', function (t) {
   var key = testKey('bit flipper')
 
   pull(
-    pull.values(input),
+    pull.values(input, function () { t.end() }),
     boxes.createEncryptStream(key),
     pull.map(function (data) {
 
@@ -146,7 +146,6 @@ tape('detect flipped bits', function (t) {
     pull.collect(function (err, output) {
       t.ok(err)
       t.notEqual(output.length, input.length)
-      t.end()
     })
   )
 
@@ -177,13 +176,11 @@ tape('protect against reordering', function (t) {
       invalid[j] = valid[i]
       invalid[j+1] = valid[i+1]
       pull(
-        pull.values(invalid),
+        pull.values(invalid, function () { t.end() }),
         boxes.createDecryptStream(key),
         pull.collect(function (err, output) {
           t.notEqual(output.length, input.length)
           t.ok(err)
-          console.log(err)
-          t.end()
         })
       )
     })

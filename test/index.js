@@ -5,6 +5,7 @@ var randomBytes = require('crypto').randomBytes
 var increment = require('increment-buffer')
 var split = require('pull-randomly-split')
 var boxes = require('../')
+var bitflipper = require('pull-bitflipper')
 
 var sodium = require('sodium').api
 
@@ -131,17 +132,7 @@ tape('detect flipped bits', function (t) {
   pull(
     pull.values(input, function () { t.end() }),
     boxes.createEncryptStream(key),
-    pull.map(function (data) {
-
-      if(Math.random() < 0.1) {
-        var rbit = 1<<(8*Math.random())
-        var i = ~~(Math.random()*data.length)
-        data[i] = data[i]^rbit
-      }
-
-      return data
-
-    }),
+    bitflipper(0.1),
     boxes.createDecryptStream(key),
     pull.collect(function (err, output) {
       t.ok(err)

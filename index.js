@@ -64,9 +64,11 @@ exports.createEncryptStream = function (key, init_nonce) {
 
   return through(function (data) {
 
-    if(!isBuffer(data)) {
-      return this.emit('error', new Error('input must be a buffer'))
-    }
+    if('string' === typeof data)
+      data = new Buffer(data, 'utf8')
+    else if(!isBuffer(data))
+      return this.emit('error', new Error('must be buffer'))
+
     var input = split(data, max)
 
     for(var i = 0; i < input.length; i++) {

@@ -11,16 +11,15 @@ var concat = Buffer.concat
 var zeros = new Buffer(16); zeros.fill(0)
 
 function box (buffer, nonce, key) {
-  var b = sodium.crypto_secretbox(buffer, nonce, key)
-  return b.slice(16, b.length)
+  return sodium.crypto_secretbox_easy(buffer, nonce, key)
 }
 
 function unbox (boxed, nonce, key) {
-  return sodium.crypto_secretbox_open(concat([zeros, boxed]), nonce, key)
+  return sodium.crypto_secretbox_open_easy(boxed, nonce, key)
 }
 
 function unbox_detached (mac, boxed, nonce, key) {
-  return sodium.crypto_secretbox_open(concat([zeros, mac, boxed]), nonce, key)
+  return sodium.crypto_secretbox_open_easy(concat([mac, boxed]), nonce, key)
 }
 
 var max = 1024*4

@@ -247,4 +247,58 @@ tape('immediately hangup', function (t) {
 
 })
 
+function stall () {
+  var _cb
+  return function (abort, cb) {
+    console.log('Abort?', abort)
+    if(abort) {
+      console.log(abort, _cb, cb)
+      _cb && _cb(abort)
+      cb && cb(abort)
+    }
+    else _cb = cb
+  }
+
+}
+
+tape('stalled abort', function (t) {
+
+  var key = testKey('stalled abort')
+  var err = new Error('intentional')
+  var read = pull(stall(), boxes.createBoxStream(key))
+
+  var i = 0
+  read(null, function (_err, data) {
+    t.equal(_err, err)
+    t.equal(++i, 1)
+  })
+
+  read(err, function () {
+    t.ok(true)
+    t.equal(++i, 2)
+    t.end()
+  })
+
+})
+
+tape('stalled abort', function (t) {
+
+  var key = testKey('stalled abort2')
+  var read = pull(stall(), boxes.createUnboxStream(key))
+  var err = new Error('intentional')
+
+  var i = 0
+  read(null, function (_err, data) {
+    t.equal(_err, err)
+    t.equal(++i, 1)
+    console.log('ended', err, data)
+  })
+
+  read(err, function () {
+    t.ok(true)
+    t.equal(++i, 2)
+    t.end()
+  })
+
+})
 

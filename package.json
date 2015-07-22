@@ -11,7 +11,7 @@
     "sodium": "~1.0.17",
     "pull-stream": "~2.27.0",
     "split-buffer": "~1.0.0",
-    "pull-reader": "~1.1.0",
+    "pull-reader": "~1.1.1",
     "increment-buffer": "~1.0.0",
     "pull-through": "~1.0.17"
   },

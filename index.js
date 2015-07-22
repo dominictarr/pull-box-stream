@@ -108,8 +108,8 @@ exports.createDecryptStream = function (key, nonce) {
 
   return function (read) {
     reader(read)
-    return function (abort, cb) {
-
+    return function (end, cb) {
+      if(end) return reader.abort(end, cb)
       //use abort when the input was invalid,
       //but the source hasn't actually ended yet.
       function abort(err) {

@@ -1,5 +1,5 @@
 'use strict'
-var sodium = require('sodium/build/Release/sodium')
+var sodium = require('chloride/build/Release/sodium')
 var Reader = require('pull-reader')
 var increment = require('increment-buffer')
 var through = require('pull-through')

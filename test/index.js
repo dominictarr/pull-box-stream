@@ -7,7 +7,7 @@ var split = require('pull-randomly-split')
 var boxes = require('../')
 var bitflipper = require('pull-bitflipper')
 
-var sodium = require('sodium').api
+var sodium = require('chloride').api
 
 var box = sodium.crypto_secretbox
 var unbox = sodium.crypto_secretbox_open

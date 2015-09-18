@@ -302,3 +302,18 @@ tape('stalled abort', function (t) {
 
 })
 
+tape('encrypt empty buffers', function (t) {
+
+  var key = testKey('empty')
+  pull(
+    pull.values([new Buffer(0)]),
+    boxes.createBoxStream(key),
+    boxes.createUnboxStream(key),
+    pull.collect(function (err, buffers) {
+      var actual = Buffer.concat(buffers)
+      t.deepEqual(actual, new Buffer(0))
+      t.end()
+    })
+  )
+
+})

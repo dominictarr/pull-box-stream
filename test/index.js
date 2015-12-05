@@ -7,14 +7,14 @@ var split = require('pull-randomly-split')
 var boxes = require('../')
 var bitflipper = require('pull-bitflipper')
 
-var sodium = require('chloride').api
+var sodium = require('chloride/build/Release/sodium')
 
-var box = sodium.crypto_secretbox
-var unbox = sodium.crypto_secretbox_open
+var box = sodium.crypto_secretbox_easy
+var unbox = sodium.crypto_secretbox_open_easy
 
 var concat = Buffer.concat
 
-var zeros = new Buffer(16); zeros.fill(0)
+//var zeros = new Buffer(16); zeros.fill(0)
 
 // testing is easier when 
 
@@ -43,7 +43,7 @@ tape('encrypt a stream', function (t) {
       console.log(ary)
       console.log(ary.map(function (e) { return e.length }))
 
-      var plainhead = unbox(concat([zeros, head]), _nonce, _key)
+      var plainhead = unbox(head, _nonce, _key)
       var length = plainhead.readUInt16BE(0)
 
       t.equal(length, 11)
@@ -54,7 +54,7 @@ tape('encrypt a stream', function (t) {
       _nonce.copy(nonce2, 0, 0, 24)
 
       var plainchunk =
-        unbox(concat([zeros, mac, chunk]), increment(nonce2), _key)
+        unbox(concat([mac, chunk]), increment(nonce2), _key)
 
       t.deepEqual(plainchunk, new Buffer('hello there'))
 

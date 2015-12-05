@@ -1,5 +1,5 @@
 'use strict'
-var sodium = require('chloride/build/Release/sodium')
+var sodium = require('chloride')
 var Reader = require('pull-reader')
 var increment = require('increment-buffer')
 var through = require('pull-through')
@@ -8,15 +8,8 @@ var split = require('split-buffer')
 var isBuffer = Buffer.isBuffer
 var concat = Buffer.concat
 
-var zeros = new Buffer(16); zeros.fill(0)
-
-function box (buffer, nonce, key) {
-  return sodium.crypto_secretbox_easy(buffer, nonce, key)
-}
-
-function unbox (boxed, nonce, key) {
-  return sodium.crypto_secretbox_open_easy(boxed, nonce, key)
-}
+var box = sodium.crypto_secretbox_easy
+var unbox = sodium.crypto_secretbox_open_easy  
 
 function unbox_detached (mac, boxed, nonce, key) {
   return sodium.crypto_secretbox_open_easy(concat([mac, boxed]), nonce, key)

@@ -1,7 +1,7 @@
 {
   "name": "pull-box-stream",
   "description": "every-byte-is-encrypted and authenticated pull-stream",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "homepage": "https://github.com/dominictarr/pull-box-stream",
   "repository": {
     "type": "git",

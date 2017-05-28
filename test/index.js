@@ -7,7 +7,7 @@ var split = require('pull-randomly-split')
 var boxes = require('../')
 var bitflipper = require('pull-bitflipper')
 
-var sodium = require('chloride/build/Release/sodium')
+var sodium = require('chloride')
 
 var box = sodium.crypto_secretbox_easy
 var unbox = sodium.crypto_secretbox_open_easy
@@ -79,6 +79,34 @@ function randomBuffers(len, n) {
   return a
 }
 
+tape('encrypt/decrypt simple', function (t) {
+
+  var start = Date.now()
+  console.log('e/d')
+  var key = testKey('encrypt/decrypt a stream, easy')
+
+  var input = [new Buffer('can you read this?'), new Buffer(4100)]
+  pull(
+    pull.values(input),
+    boxes.createEncryptStream(new Buffer(key)),
+    boxes.createDecryptStream(new Buffer(key)),
+    pull.through(console.log),
+    pull.collect(function (err, output) {
+      var time = Date.now() - start
+      console.log(100/(time/1000), 'mb/s')
+
+      if(err) throw err
+
+      output = concat(output)
+      input = concat(input)
+      t.equal(output.length, input.length)
+      t.deepEqual(output, input)
+      t.end()
+    })
+  )
+})
+return
+
 tape('encrypt/decrypt', function (t) {
 
   var input = randomBuffers(1024*512, 2*10)
@@ -89,17 +117,16 @@ tape('encrypt/decrypt', function (t) {
   pull(
     pull.values(input),
     split(),
-    boxes.createEncryptStream(key),
+    boxes.createEncryptStream(new Buffer(key)),
     split(),
-    boxes.createDecryptStream(key),
-
+    boxes.createDecryptStream(new Buffer(key)),
+    pull.through(console.log),
     pull.collect(function (err, output) {
       var time = Date.now() - start
       console.log(100/(time/1000), 'mb/s')
 
       if(err) throw err
 
-      
       output = concat(output)
       input = concat(input)
       t.equal(output.length, input.length)
@@ -317,3 +344,7 @@ tape('encrypt empty buffers', function (t) {
   )
 
 })
+
+
+
+

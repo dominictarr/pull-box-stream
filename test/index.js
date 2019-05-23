@@ -31,7 +31,6 @@ function testKey (str) {
 tape('encrypt a stream', function (t) {
 
   var key = testKey('encrypt a stream - test 1')
-  console.log('key', key)
 
   pull(
     pull.values([new Buffer('hello there')]),

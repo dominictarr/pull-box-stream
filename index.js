@@ -9,7 +9,6 @@ var isBuffer = Buffer.isBuffer
 var concat = Buffer.concat
 
 function box (ptxt, nonce, key) {
-  console.log(key)
   var ctxt = new Buffer(ptxt.length + sodium.crypto_secretbox_MACBYTES)
   sodium.crypto_secretbox_easy(ctxt, ptxt, nonce, key)
   return ctxt

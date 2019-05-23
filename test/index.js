@@ -7,24 +7,31 @@ var split = require('pull-randomly-split')
 var boxes = require('../')
 var bitflipper = require('pull-bitflipper')
 
-var sodium = require('chloride')
+var sodium = require('sodium-universal')
 
 var box = sodium.crypto_secretbox_easy
-var unbox = sodium.crypto_secretbox_open_easy
+var unbox = function (ctxt, nonce, key) {
+  var ptxt = new Buffer(ctxt.length - sodium.crypto_secretbox_MACBYTES)
+  sodium.crypto_secretbox_open_easy(ptxt, ctxt, nonce, key)
+  return ptxt
+}
 
 var concat = Buffer.concat
 
 //var zeros = new Buffer(16); zeros.fill(0)
 
-// testing is easier when 
+// testing is easier when
 
 function testKey (str) {
-  return sodium.crypto_hash(new Buffer(str)).slice(0, 56)
+  var hash = new Buffer(sodium.crypto_hash_BYTES)
+  sodium.crypto_hash_sha512(hash, new Buffer(str))
+  return hash.slice(0, 56)
 }
 
 tape('encrypt a stream', function (t) {
 
   var key = testKey('encrypt a stream - test 1')
+  console.log('key', key)
 
   pull(
     pull.values([new Buffer('hello there')]),

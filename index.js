@@ -1,5 +1,5 @@
 'use strict'
-var sodium = require('chloride')
+var sodium = require('sodium-universal')
 var Reader = require('pull-reader')
 var increment = require('increment-buffer')
 var through = require('pull-through')
@@ -8,11 +8,20 @@ var split = require('split-buffer')
 var isBuffer = Buffer.isBuffer
 var concat = Buffer.concat
 
-var box = sodium.crypto_secretbox_easy
-var unbox = sodium.crypto_secretbox_open_easy  
+function box (ptxt, nonce, key) {
+  console.log(key)
+  var ctxt = new Buffer(ptxt.length + sodium.crypto_secretbox_MACBYTES)
+  sodium.crypto_secretbox_easy(ctxt, ptxt, nonce, key)
+  return ctxt
+}
+function unbox (ctxt, nonce, key) {
+  var ptxt = new Buffer(ctxt.length - sodium.crypto_secretbox_MACBYTES)
+  sodium.crypto_secretbox_open_easy(ptxt, ctxt, nonce, key)
+  return ptxt
+}
 
 function unbox_detached (mac, boxed, nonce, key) {
-  return sodium.crypto_secretbox_open_easy(concat([mac, boxed]), nonce, key)
+  return unbox(concat([mac, boxed]), nonce, key)
 }
 
 var max = 1024*4
@@ -39,7 +48,7 @@ function copy (a) {
 }
 
 exports.createBoxStream =
-exports.createEncryptStream = function (key, init_nonce) {
+  exports.createEncryptStream = function (key, init_nonce) {
 
   if(key.length === 56) {
     init_nonce = key.slice(32, 56)

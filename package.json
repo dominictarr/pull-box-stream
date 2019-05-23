@@ -8,11 +8,11 @@
     "url": "git://github.com/dominictarr/pull-box-stream.git"
   },
   "dependencies": {
-    "chloride": "^2.2.7",
     "increment-buffer": "~1.0.0",
     "pull-reader": "^1.2.5",
     "pull-stream": "^3.2.3",
     "pull-through": "^1.0.18",
+    "sodium-universal": "^2.0.0",
     "split-buffer": "~1.0.0"
   },
   "devDependencies": {

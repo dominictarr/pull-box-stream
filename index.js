@@ -8,16 +8,30 @@ var split = require('split-buffer')
 var isBuffer = Buffer.isBuffer
 var concat = Buffer.concat
 
+var buff4096plusMACBYTES = Buffer.alloc(4096 + sodium.crypto_secretbox_MACBYTES)
+var buff18plusMACBYTES = Buffer.alloc(18 + sodium.crypto_secretbox_MACBYTES)
+
 function box (ptxt, nonce, key) {
+  if (ptxt.length === 18) {
+   sodium.crypto_secretbox_easy(buff18plusMACBYTES, ptxt, nonce, key)
+   return buff18
+  }
+  if (ptxt.length === 4096) {
+    sodium.crypto_secretbox_easy(buff4096plusMACBYTES, ptxt, nonce, key)
+    return buff4096
+  }
+
   var ctxt = new Buffer(ptxt.length + sodium.crypto_secretbox_MACBYTES)
   sodium.crypto_secretbox_easy(ctxt, ptxt, nonce, key)
   return ctxt
 }
+
 function unbox (ctxt, nonce, key) {
-  var ptxt = new Buffer(ctxt.length - sodium.crypto_secretbox_MACBYTES)
+  var ptxt = ctxt.slice(16) // TODO
   sodium.crypto_secretbox_open_easy(ptxt, ctxt, nonce, key)
   return ptxt
 }
+
 
 function unbox_detached (mac, boxed, nonce, key) {
   return unbox(concat([mac, boxed]), nonce, key)

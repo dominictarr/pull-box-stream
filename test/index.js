@@ -105,7 +105,10 @@ tape('encrypt/decrypt simple', function (t) {
     })
   )
 })
-return
+
+
+// HACK: disables all future tests instead of using global `return
+tape = function () {}
 
 tape('encrypt/decrypt', function (t) {
 
